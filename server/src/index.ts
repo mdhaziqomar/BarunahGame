@@ -121,6 +121,6 @@ app.use('*', (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Barunah server running on port ${PORT}`);
-  console.log(`🌐 Client URL: https://barunah.vercel.app`);
+  console.log(`🌐 Client URL: https://barunah-game.vercel.app`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 }); 
