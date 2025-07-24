@@ -1,0 +1,305 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  VENDOR
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum Subject {
+  MELAYU_CULTURE
+  ISLAMIC_VALUES
+  BERAJA_SYSTEM
+  BRUNEI_HISTORY
+  GENERAL_MIB
+}
+
+enum GameStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  REDEEMED
+  EXPIRED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  fullName  String
+  role      UserRole @default(STUDENT)
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Student specific fields
+  school          String?
+  grade           String?
+  knowledgePoints Int     @default(0)
+  level           Int     @default(1)
+  experience      Int     @default(0)
+
+  // Vendor specific fields
+  businessName String?
+  businessType String?
+  contactPhone String?
+
+  // Relations
+  games         Game[]
+  gameAnswers   GameAnswer[]
+  userRewards   UserReward[]
+  userPets      UserPet[]
+  userStats     UserStats?
+  vendorRewards Reward[]     @relation("VendorRewards")
+
+  @@map("users")
+}
+
+model Question {
+  id            String     @id @default(cuid())
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String // A, B, C, or D
+  explanation   String?
+  subject       Subject
+  difficulty    Difficulty
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  gameAnswers   GameAnswer[]
+  bossQuestions BossQuestion[]
+
+  @@map("questions")
+}
+
+model Game {
+  id                    String     @id @default(cuid())
+  userId                String
+  status                GameStatus @default(ACTIVE)
+  difficulty            Difficulty
+  subject               Subject? // null for mixed subjects
+  currentQuestion       Int        @default(1)
+  totalQuestions        Int        @default(10)
+  score                 Int        @default(0)
+  knowledgePointsEarned Int        @default(0)
+  timeStarted           DateTime   @default(now())
+  timeCompleted         DateTime?
+
+  // Boss fight data
+  bossDefeated Boolean @default(false)
+  bossHp       Int?
+  bossMaxHp    Int?
+
+  // Upgrades purchased during game
+  timerBonus   Int     @default(0)
+  shieldActive Boolean @default(false)
+  kpMultiplier Float   @default(1.0)
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id])
+  gameAnswers GameAnswer[]
+
+  @@map("games")
+}
+
+model GameAnswer {
+  id                    String   @id @default(cuid())
+  gameId                String
+  questionId            String
+  userId                String
+  selectedAnswer        String // A, B, C, or D
+  isCorrect             Boolean
+  timeSpent             Int // in seconds
+  knowledgePointsEarned Int      @default(0)
+  answeredAt            DateTime @default(now())
+
+  // Relations
+  game     Game     @relation(fields: [gameId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@map("game_answers")
+}
+
+model Reward {
+  id                  String   @id @default(cuid())
+  title               String
+  description         String
+  knowledgePointsCost Int
+  imageUrl            String?
+  category            String // e.g., "Stationery", "Discount", "Gift"
+  isActive            Boolean  @default(true)
+  stockQuantity       Int      @default(0)
+  vendorId            String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  vendor      User         @relation("VendorRewards", fields: [vendorId], references: [id])
+  userRewards UserReward[]
+
+  @@map("rewards")
+}
+
+model UserReward {
+  id         String       @id @default(cuid())
+  userId     String
+  rewardId   String
+  status     RewardStatus @default(PENDING)
+  qrCode     String? // For redemption
+  redeemedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime     @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  reward Reward @relation(fields: [rewardId], references: [id])
+
+  @@map("user_rewards")
+}
+
+model Pet {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String
+  imageUrl            String
+  rarity              String // Common, Rare, Epic, Legendary
+  knowledgePointsCost Int
+  abilities           String[] // Array of abilities
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  // Relations
+  userPets UserPet[]
+
+  @@map("pets")
+}
+
+model UserPet {
+  id         String   @id @default(cuid())
+  userId     String
+  petId      String
+  nickname   String?
+  level      Int      @default(1)
+  experience Int      @default(0)
+  isActive   Boolean  @default(true)
+  acquiredAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  pet  Pet  @relation(fields: [petId], references: [id])
+
+  @@unique([userId, petId])
+  @@map("user_pets")
+}
+
+model Boss {
+  id          String     @id @default(cuid())
+  name        String
+  description String
+  imageUrl    String
+  baseHp      Int
+  hpPerLevel  Int        @default(50)
+  difficulty  Difficulty
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  bossQuestions BossQuestion[]
+
+  @@map("bosses")
+}
+
+model BossQuestion {
+  id         String @id @default(cuid())
+  bossId     String
+  questionId String
+
+  // Relations
+  boss     Boss     @relation(fields: [bossId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([bossId, questionId])
+  @@map("boss_questions")
+}
+
+model UserStats {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  totalGamesPlayed    Int       @default(0)
+  totalBossesDefeated Int       @default(0)
+  totalCorrectAnswers Int       @default(0)
+  totalQuestions      Int       @default(0)
+  longestStreak       Int       @default(0)
+  currentStreak       Int       @default(0)
+  averageScore        Float     @default(0.0)
+  totalTimeSpent      Int       @default(0) // in seconds
+  favoriteSubject     Subject?
+  lastPlayedAt        DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_stats")
+}
+
+model Leaderboard {
+  id               String   @id @default(cuid())
+  userId           String
+  username         String
+  knowledgePoints  Int
+  level            Int
+  totalGamesPlayed Int
+  bossesDefeated   Int
+  rank             Int
+  period           String // weekly, monthly, all-time
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, period])
+  @@map("leaderboard")
+}
+
+model SystemSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
