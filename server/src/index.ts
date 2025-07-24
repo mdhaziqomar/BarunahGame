@@ -23,7 +23,7 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "https://barunah.vercel.app",
+      "https://barunah-game.vercel.app",
       "http://localhost:5173"
     ],
     methods: ["GET", "POST"]
@@ -41,7 +41,7 @@ app.use(helmet());
 // --- Updated CORS configuration ---
 app.use(cors({
   origin: [
-    "https://barunah.vercel.app",
+    "https://barunah-game.vercel.app",
     "http://localhost:5173"
   ],
   credentials: true
