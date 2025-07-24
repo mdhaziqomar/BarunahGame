@@ -28,6 +28,9 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Security middleware
 app.use(helmet());
@@ -58,11 +61,7 @@ app.use('/api/vendor', vendorRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    service: 'Barunah API Server' 
-  });
+  res.status(200).json({ status: 'ok' });
 });
 
 // Socket.io connection handling
