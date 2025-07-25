@@ -22,10 +22,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://barunah-game.vercel.app",
-      "http://localhost:5173"
-    ],
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -37,16 +34,10 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
-
-// --- Updated CORS configuration ---
 app.use(cors({
-  origin: [
-    "https://barunah-game.vercel.app",
-    "http://localhost:5173"
-  ],
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true
 }));
-// ----------------------------------
 
 // Rate limiting
 const limiter = rateLimit({
@@ -121,6 +112,6 @@ app.use('*', (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Barunah server running on port ${PORT}`);
-  console.log(`🌐 Client URL: https://barunah-game.vercel.app`);
+  console.log(`🌐 Client URL: ${process.env.CLIENT_URL || "http://localhost:5173"}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 }); 

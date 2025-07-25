@@ -490,7 +490,7 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">📝 Recent Activity</h3>
                 <div className="space-y-3">
                   {analytics?.recentGames && analytics.recentGames.length > 0 ? (
-                    analytics.recentGames.map((game: any, _index: number) => (
+                    analytics.recentGames.map((game: any, index: number) => (
                       <div key={game.id} className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
                         <span className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">🎮</span>
                         <div className="flex-1">
